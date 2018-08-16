@@ -33,7 +33,7 @@ private:
     MqttSnMessageHandler<MqttSnClient_SocketInterface> mqttSnMessageHandler;
 
     template<typename MqttSnMessageHandler_SocketInterface> friend
-    class PacketHandler;
+    class MqttSnMessageHandler;
 
     System system;
 
@@ -50,6 +50,8 @@ private:
 
     //we supports only single subscription at the moment
     topic_registration registration;
+    topic_registration publish_registration;
+
 public:
     explicit MqttSnClient(MqttSnClient_SocketInterface &socketInterface) : socketInterface(
             socketInterface), mqttSnMessageHandler(socketInterface, *this) {}
@@ -97,10 +99,10 @@ public:
 
     bool connect(device_address *address, const char *client_id, uint16_t duration) {
         // global verwalten
-        uint8_t retries = 5;
+        uint8_t retries = 2;
         memset(&this->gw_address, 0, sizeof(device_address));
         for (uint8_t tries = 0; tries < retries; tries++) {
-            system.set_heartbeat(15 * 1000);
+            system.set_heartbeat(5 * 1000);
             mqttSnMessageHandler.send_connect(address, client_id, duration);
             this->set_await_message(MQTTSN_CONNACK);
             while (!mqttsn_connected) {
@@ -140,35 +142,108 @@ public:
         await_topic_id = true;
     }
 
-    void publish(const char *payload, const char *topic, int8_t qos) {
-if(qos > 0){
-        while (this->await_msg_type != MQTTSN_PINGREQ) {
-            // wait until we have no other messages in flight
-            if (!socketInterface.loop()) {
-                return;
+    bool publish(const char *payload, const char *topic_name, int8_t qos) {
+        // check if payload is not too long
+        uint16_t payload_length = 0;
+        uint8_t msg_publish_without_payload_length = 7;
+        if (strlen(payload) + 1 > socketInterface.getMaximumMessageLength() - msg_publish_without_payload_length) {
+            // payload is too long
+            return false;
+        }
+        if(qos == 2){
+            // TODO not implemented yet
+            return false;
+        }
+        if(qos < -1 || qos > 2){
+            // invalid qos
+            return false;
+        }
+
+        if (qos > 0) {
+            while (this->await_msg_type != MQTTSN_PINGREQ) {
+                // wait until we have no other messages are in flight
+                if (!socketInterface.loop()) {
+                    return false;
+                }
             }
         }
-}
-        uint16_t payload_length = strlen(payload);
+
+        // check if topic_name is already registered
+        uint16_t topic_id = 0;
+        if (strcmp(registration.topic_name, topic_name) == 0) {
+            topic_id = registration.topic_id;
+        } else if (strcmp(publish_registration.topic_name, topic_name) == 0) {
+            topic_id = publish_registration.topic_id;
+        } else {
+            // it is not registered - register it now
+            topic_id = register_topic(topic_name);
+        }
+        if (topic_id == 0) {
+            // TODO check if compatible or if gateway deliveres 0 too (then change return type of register_topic)
+            return false;
+        }
+
+
         uint16_t msg_id = this->increment_and_get_msg_id_counter();
         if (qos == 0) {
             msg_id = 0;
         }
-if( qos == 1){
-	    this->await_msg_type != MQTTSN_PUBACK;
-}
-        uint16_t topic_id = registration.topic_id;
+        if (qos == 1) {
+            this->set_await_message(MQTTSN_PUBACK);
+        }
+
         mqttSnMessageHandler.send_publish(&gw_address, (uint8_t *) payload, payload_length, msg_id, topic_id, true,
-                                           false, qos, false);
-if(qos > 0){
+                                          false, qos, false);
+        if (qos > 0) {
+            while (this->await_msg_type != MQTTSN_PINGREQ) {
+                // wait until we have no other messages in flight
+                if (!socketInterface.loop()) {
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+
+    uint16_t register_topic(const char *topic_name) {
         while (this->await_msg_type != MQTTSN_PINGREQ) {
             // wait until we have no other messages in flight
             if (!socketInterface.loop()) {
-                return;
+                return 0;
             }
         }
-}
+        uint16_t msg_id = this->increment_and_get_msg_id_counter();
+        strcpy(publish_registration.topic_name, topic_name);
+        this->set_await_message(MQTTSN_REGACK);
+        mqttSnMessageHandler.send_register(&gw_address, msg_id, topic_name);
+
+        while (this->await_msg_type != MQTTSN_PINGREQ) {
+            // wait until MQTTSN_REGACK arrived
+            if (!socketInterface.loop()) {
+                return 0;
+            }
+        }
+        return publish_registration.topic_id;
+
     }
+
+    void handle_regack(uint16_t topic_id, uint16_t msg_id, return_code_t return_code) {
+        if (this->msg_id_counter == msg_id) {
+            if (return_code == ACCEPTED) {
+                publish_registration.topic_id = topic_id;
+            } else if (return_code == REJECTED_CONGESTION) {
+                publish_registration.topic_id = 0;
+            } else if (return_code == REJECTED_INVALID_TOPIC_ID) {
+                publish_registration.topic_id = 0;
+            } else if (return_code == REJECTED_NOT_SUPPORTED) {
+                // subscribe only gateway ?
+                publish_registration.topic_id = 0;
+            }
+            this->set_await_message(MQTTSN_PINGREQ);
+        }
+        // this is not the druid eh ... message we are waiting for
+    }
+
 
     message_type get_await_message() {
         return this->await_msg_type;
@@ -217,6 +292,7 @@ if(qos > 0){
 
     void handle_publish(device_address *address, uint8_t *data, uint16_t data_len, uint16_t topic_id, bool retain,
                         int8_t qos) {
+
         // call callback :)
         if (topic_id == registration.topic_id && qos == registration.granted_qos) {
             callback(registration.topic_name, data, data_len, retain);

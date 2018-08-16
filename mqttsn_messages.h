@@ -175,7 +175,7 @@ struct msg_connect : public message_header {
     }
 
 };
-
+#pragma pack(push, 1)
 
 struct msg_connack : public message_header {
     return_code_t return_code;
@@ -185,6 +185,10 @@ struct msg_connack : public message_header {
         type = MQTTSN_CONNACK;
     }
 };
+
+#pragma pack(pop)
+
+
 
 struct msg_willtopic : public message_header {
     uint8_t flags;
@@ -258,7 +262,7 @@ struct msg_regack : public message_header {
     }
 };
 
-#pragma pack(push, 1) // exact fit - no padding
+#pragma pack(push, 1)
 
 struct msg_publish : public message_header {
     uint8_t flags;
@@ -298,7 +302,7 @@ struct msg_publish : public message_header {
     }
 };
 
-#pragma pack(pop) //back to whatever the previous packing mode was
+#pragma pack(pop)
 
 struct msg_publish_send : public message_header {
     uint8_t flags;
@@ -364,6 +368,8 @@ struct msg_subscribe_shorttopic : public msg_subscribe {
     }
 };
 
+#pragma pack(push, 1) // exact fit - no padding
+
 struct msg_subscribe_topicname : public msg_subscribe {
     uint16_t message_id;
     char topic_name[250];
@@ -383,11 +389,13 @@ struct msg_subscribe_topicname : public msg_subscribe {
             this->flags |= FLAG_QOS_2;
         }
         this->message_id = msg_id;
-        //TODO move to core later
-        memcpy(this->topic_name, topic_name, strlen(topic_name));
+        strcpy(this->topic_name, topic_name);
     }
 };
 
+#pragma pack(pop) //back to whatever the previous packing mode was
+
+#pragma pack(push, 1)
 
 struct msg_suback : public message_header {
     uint8_t flags;
@@ -411,6 +419,7 @@ struct msg_suback : public message_header {
         this->return_code = return_code;
     }
 };
+#pragma pack(pop) //back to whatever the previous packing mode was
 
 struct msg_unsubscribe : public message_header {
     uint8_t flags;

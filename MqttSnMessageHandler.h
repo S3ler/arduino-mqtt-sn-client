@@ -26,6 +26,7 @@ public:
 
 
     void receiveData(device_address *address, uint8_t *bytes) {
+
         message_header *header = (message_header *) bytes;
         if (header->length < 2) {
             return;
@@ -57,7 +58,7 @@ public:
                 parse_suback(address, bytes);
                 break;
             case MQTTSN_REGACK:
-                // TODO
+                parse_regack(address, bytes);
             case MQTTSN_PUBLISH:
                 parse_publish(address, bytes);
                 break;
@@ -194,6 +195,13 @@ public:
         //TODO disconnect
     }
 
+    void parse_regack(device_address *pAddress, uint8_t *bytes) {
+        msg_regack* msg = (msg_regack *) bytes;
+        if(bytes[0] == 7 & bytes[1] == MQTTSN_REGACK){
+            mqttSnClient.handle_regack(msg->topic_id, msg->message_id, msg->return_code);
+        }
+    }
+
     void parse_publish(device_address *address, uint8_t *bytes) {
         msg_publish *msg = (msg_publish *) bytes;
         if (bytes[0] > 7 && bytes[1] == MQTTSN_PUBLISH) { // 7 bytes header + at least 1 byte data
@@ -227,6 +235,7 @@ public:
             mqttSnClient.handle_publish(address, msg->data, data_len, msg->topic_id, retain, qos);
             return;
         }
+
         // TODO disconnect
     }
 
@@ -234,6 +243,13 @@ public:
     void send_publish(device_address *address, uint8_t *data, uint8_t data_len, uint16_t msg_id,
                       uint16_t topic_id, bool short_topic, bool retain, uint8_t qos, bool dup) {
         msg_publish to_send(dup, qos, retain, short_topic, topic_id, msg_id, data, data_len);
+        if (!socketInterface.send(address, (uint8_t *) &to_send, (uint16_t) to_send.length)) {
+            mqttSnClient.notify_socket_disconnected();
+        }
+    }
+
+    void send_register(device_address *address, uint16_t msg_id, const char *topic_name) {
+        msg_register to_send(0x0, msg_id, topic_name);
         if (!socketInterface.send(address, (uint8_t *) &to_send, (uint16_t) to_send.length)) {
             mqttSnClient.notify_socket_disconnected();
         }

@@ -236,6 +236,7 @@ struct msg_willmsgreq : public message_header {
     }
 };
 */
+#pragma pack(push, 1)
 
 struct msg_register : public message_header {
     uint16_t topic_id;
@@ -246,9 +247,14 @@ struct msg_register : public message_header {
             topic_id(topic_id), message_id(message_id) {
         length = (uint8_t) (6 + strlen(topic_name) + 1);
         type = MQTTSN_REGISTER;
-        memcpy(this->topic_name, topic_name, strlen(topic_name) + 1);
+        strcpy(this->topic_name, topic_name);
+        //memcpy(this->topic_name, topic_name, strlen(topic_name) + 1);
     }
 };
+
+#pragma pack(pop)
+
+#pragma pack(push, 1)
 
 struct msg_regack : public message_header {
     uint16_t topic_id;
@@ -261,6 +267,7 @@ struct msg_regack : public message_header {
         type = MQTTSN_REGACK;
     }
 };
+#pragma pack(pop)
 
 #pragma pack(push, 1)
 

@@ -57,6 +57,9 @@ public:
             socketInterface), mqttSnMessageHandler(socketInterface, *this) {}
 
     bool begin() {
+        memset(&publish_registration, 0x0, sizeof(topic_registration));
+        memset(&registration, 0x0, sizeof(topic_registration));
+
         socketInterface.setMqttSnMessageHandler(&mqttSnMessageHandler);
         return mqttSnMessageHandler.begin();
     }
@@ -142,7 +145,8 @@ public:
         await_topic_id = true;
     }
 
-    bool publish(const char *payload, const char *topic_name, int8_t qos) {
+    bool publish(char *payload, char *topic_name, int8_t qos) {
+
         // check if payload is not too long
         uint16_t payload_length = 0;
         uint8_t msg_publish_without_payload_length = 7;
@@ -150,11 +154,12 @@ public:
             // payload is too long
             return false;
         }
-        if(qos == 2){
+        payload_length = strlen(payload) + 1;
+        if (qos == 2) {
             // TODO not implemented yet
             return false;
         }
-        if(qos < -1 || qos > 2){
+        if (qos < -1 || qos > 2) {
             // invalid qos
             return false;
         }
@@ -170,9 +175,9 @@ public:
 
         // check if topic_name is already registered
         uint16_t topic_id = 0;
-        if (strcmp(registration.topic_name, topic_name) == 0) {
+        if (this->registration.topic_name == topic_name) {
             topic_id = registration.topic_id;
-        } else if (strcmp(publish_registration.topic_name, topic_name) == 0) {
+        } else if (this->publish_registration.topic_name == topic_name) {
             topic_id = publish_registration.topic_id;
         } else {
             // it is not registered - register it now
@@ -182,6 +187,7 @@ public:
             // TODO check if compatible or if gateway deliveres 0 too (then change return type of register_topic)
             return false;
         }
+        publish_registration.topic_id = topic_id;
 
 
         uint16_t msg_id = this->increment_and_get_msg_id_counter();
@@ -205,7 +211,7 @@ public:
         return true;
     }
 
-    uint16_t register_topic(const char *topic_name) {
+    uint16_t register_topic(char *topic_name) {
         while (this->await_msg_type != MQTTSN_PINGREQ) {
             // wait until we have no other messages in flight
             if (!socketInterface.loop()) {
@@ -213,7 +219,9 @@ public:
             }
         }
         uint16_t msg_id = this->increment_and_get_msg_id_counter();
-        strcpy(publish_registration.topic_name, topic_name);
+        publish_registration.topic_name = (char *) topic_name;
+        //      publish_registration.topic_name = (char *) topic_name;
+
         this->set_await_message(MQTTSN_REGACK);
         mqttSnMessageHandler.send_register(&gw_address, msg_id, topic_name);
 
@@ -292,8 +300,10 @@ public:
 
     void handle_publish(device_address *address, uint8_t *data, uint16_t data_len, uint16_t topic_id, bool retain,
                         int8_t qos) {
-
         // call callback :)
+        if(topic_id == publish_registration.topic_id){
+            callback(publish_registration.topic_name, data, data_len, retain);
+        }
         if (topic_id == registration.topic_id && qos == registration.granted_qos) {
             callback(registration.topic_name, data, data_len, retain);
         }

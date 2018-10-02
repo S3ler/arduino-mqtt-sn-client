@@ -101,7 +101,14 @@ public:
                     IPAddress remoteIP = wiFiUdp.remoteIP();
                     uint16_t remotePort = wiFiUdp.remotePort();
                     convertIPAddressAndPortToDeviceAddress(remoteIP, remotePort, receive_address);
-                    mqttSnMessageHandler->receiveData(&receive_address, receive_buffer);
+
+                    if(mqttSnMessageHandler != nullptr){
+                        mqttSnMessageHandler->receiveData(&receive_address, receive_buffer);
+                    }
+
+                    if(transmissionProtocolUartBridge != nullptr){
+                        transmissionProtocolUartBridge->receiveData(&receive_address, receive_buffer, available);
+                    }
 
                 }
             }
@@ -116,8 +123,16 @@ public:
             MqttSnMessageHandler<WiFiUdpSocket> *mqttSnMessageHandler) {
         this->mqttSnMessageHandler = mqttSnMessageHandler;
     };
+
+    template<class WiFiUdpSocket>
+    void setTransmissionProtocolUartBridge(
+            TransmissionProtocolUartBridge<WiFiUdpSocket> *transmissionProtocolUartBridge) {
+        this->transmissionProtocolUartBridge = transmissionProtocolUartBridge;
+    };
 private:
-    MqttSnMessageHandler<WiFiUdpSocket> *mqttSnMessageHandler;
+    MqttSnMessageHandler<WiFiUdpSocket> *mqttSnMessageHandler = nullptr;
+    TransmissionProtocolUartBridge<WiFiUdpSocket> *transmissionProtocolUartBridge = nullptr;
+
 };
 
 

@@ -4,6 +4,7 @@
 
 
 #include "MqttSnMessageHandler.h"
+#include "TransmissionProtocolUartBridge.h"
 #include "global_defines.h"
 
 class SocketInterface
@@ -21,13 +22,21 @@ public:
     void setMqttSnMessageHandler(MqttSnMessageHandler<SocketInterfaceImplementation> *mqttSnMessageHandler);
 
     /**
+    * Set the TransmissionProtocolUartBridge the receiveData method shall be called.
+    * @tparam T type of SocketInterface implementation
+    * @param transmissionProtocolUartBridge
+    */
+    template <class SocketInterfaceImplementation>
+    void setTransmissionProtocolUartBridge(TransmissionProtocolUartBridge<SocketInterfaceImplementation> *transmissionProtocolUartBridge);
+
+    /**
      * Initialize the network stack below, with what ever you have to do to establish the connection to the network.
      * @return true if the connection is successfully established, false in any other case.
      */
     virtual bool begin() =0 ;
 
     /**
-     * Get the abstract broadcast address to send pakets to.
+     * Get the abstract broadcast address to send packets to.
      * Implementation Note:
      * - If your network stack does not provide any broadcast address, map it to a address you save as not-to-send-address.
      * - If your network stack has a procedure to broadcast packets, map it to a address you save as to-broadcast-address.

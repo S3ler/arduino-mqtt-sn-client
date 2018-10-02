@@ -1,3 +1,9 @@
+/*
+* The MIT License (MIT)
+*
+* Copyright (C) 2018 Copyright (c) 2018 Gabriel Nikol
+*/
+
 #include <ESP8266WiFi.h>
 #include <WiFiUdp.h>
 #include "WiFiUdpSocket.h"

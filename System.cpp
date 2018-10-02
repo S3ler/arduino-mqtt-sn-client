@@ -1,3 +1,8 @@
+/*
+* The MIT License (MIT)
+*
+* Copyright (C) 2018 Copyright (c) 2018 Gabriel Nikol
+*/
 
 #include "System.h"
 

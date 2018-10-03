@@ -14,16 +14,14 @@
 #include "global_defines.h"
 #include "mqttsn_messages.h"
 
-template<class MqttSnMessageHandler_SocketInterface>
-class MqttSnMessageHandler;
 
 enum TransmissionProtocolUartBridgeStatus {
     STARTING,
     IDLE,
     SEND,
     RECEIVE,
+    CONFIGURATION,
     PARSE_FAILURE,
-    FAILURE,
     ERROR
 };
 
@@ -37,7 +35,16 @@ enum SEND_STATUS {
 enum RECEIVE_STATUS {
     RECEIVE_NONE,
     SEND_ADDRESS,
-    SEND_DATA,
+    SEND_DATA
+};
+
+enum CONFIGURATION_STATUS {
+    CONFIGURATION_NONE = 0,
+    CONFIGURATION_STATUS = 1,
+    CONFIGURATION_OWN_ADDRESS = 2,
+    CONFIGURATION_BROADCAST_ADDRESS = 3,
+    CONFIGURATION_MAXIMUM_MESSAGE_LENGTH = 4,
+    CONFIGURATION_SERIAL_BUFFER_SIZE = 5
 };
 
 
@@ -47,38 +54,51 @@ enum RECEIVE_STATUS {
 template<class TransmissionProtocolUartBridge_SocketInterface>
 class TransmissionProtocolUartBridge {
 private:
+    // SocketInterface
     TransmissionProtocolUartBridge_SocketInterface &socketInterface;
+    // friend TransmissionProtocolUartBridge_SocketInterface;
 
+    // Status
     TransmissionProtocolUartBridgeStatus status = STARTING;
     RECEIVE_STATUS receive_status = RECEIVE_NONE;
     SEND_STATUS send_status = SEND_NONE;
+    uint8_t configuration_status = CONFIGURATION_NONE;
+
+
+    // SerialBuffer
+    bool lineReady = false;
     char serialBuffer[SerialBufferSize];
     uint16_t serialBufferCounter = 0;
-    bool lineReady = false;
 
+    // SendBuffer
     device_address destination_address;
     uint8_t data[64];
     uint16_t data_length = 0;
 
-
+    // ReceiveBuffer
     device_address receive_address;
     uint8_t receive_buffer[64];
     uint16_t receive_buffer_length = 0;
 
 public:
     explicit TransmissionProtocolUartBridge(TransmissionProtocolUartBridge_SocketInterface &socketInterface) :
-        socketInterface(socketInterface) {}
+            socketInterface(socketInterface) {}
 
     bool begin() {
         memset(serialBuffer, 0x0, sizeof(serialBuffer));
         socketInterface.setTransmissionProtocolUartBridge(this);
-        return socketInterface.begin();
+        if (!socketInterface.begin()) {
+            status = ERROR;
+            return false;
+        }
+        status = IDLE;
+        return true;
     }
 
     /*
      * Receive from Serial/UART
      */
-    void putChar(char c){
+    void putChar(char c) {
         serialBuffer[serialBufferCounter++] = c;
         if (c == '\n') {
             lineReady = true;
@@ -87,8 +107,8 @@ public:
         }
     }
 
-    void receiveData(device_address *address, uint8_t *bytes, uint16_t bytes_length)  {
-        if(bytes[0] != bytes_length){
+    void receiveData(device_address *address, uint8_t *bytes, uint16_t bytes_length) {
+        if (bytes[0] != bytes_length) {
             return;
         }
         if (receive_buffer_length == 0 && sizeof(receive_buffer) > bytes[0]) {
@@ -128,11 +148,11 @@ public:
         receive_buffer_length = 0;
     }
 
-    void notify_socket_disconnected(){
+    void notify_socket_disconnected() {
         status == ERROR;
     }
 
-    void resetChip(){
+    void resetChip() {
 #if defined(ESP8266)
         Serial.print(F("OK RESET\n"));
         ESP.restart();
@@ -143,7 +163,7 @@ public:
 
     bool loop() {
 
-        if(!socketInterface.loop()){
+        if (!socketInterface.loop()) {
             return false;
         }
 
@@ -156,6 +176,7 @@ public:
 
         if (status == STARTING) {
             // begin should be already called
+            Serial.print("ERROR NOT_STARTED\n");
             return false;
         }
 
@@ -169,6 +190,10 @@ public:
                 status = RECEIVE;
                 receive_status = RECEIVE_NONE;
                 resetSerialBuffer();
+            } else if (isConfiguration(serialBuffer)) {
+                status = CONFIGURATION;
+                configuration_status = CONFIGURATION_NONE;
+                resetSerialBuffer();
             } else if (isReset(serialBuffer)) {
                 resetSerialBuffer();
                 resetChip();
@@ -176,6 +201,7 @@ public:
                 status = PARSE_FAILURE;
             }
         }
+
 
         if (status == SEND) {
             if (send_status == SEND_NONE) {
@@ -205,9 +231,7 @@ public:
                     send_status = SEND_NONE;
                     status = IDLE;
                 } else {
-                    Serial.print("FAILURE IDLE\n");
-                    send_status = SEND_NONE;
-                    status = FAILURE;
+                    status = ERROR;
                 }
             }
         }
@@ -235,6 +259,49 @@ public:
             }
         }
 
+        if (status == CONFIGURATION) {
+            if (configuration_status == CONFIGURATION_NONE) {
+                Serial.print("OK SEND_STATUS\n");
+                configuration_status = CONFIGURATION_STATUS;
+            } else if (configuration_status == CONFIGURATION_STATUS) {
+                if (printStatus()) {
+                    Serial.print("OK SEND_OWN_ADDRESS\n");
+                    configuration_status = CONFIGURATION_OWN_ADDRESS;
+                } else {
+                    status = ERROR;
+                }
+            } else if (configuration_status == CONFIGURATION_OWN_ADDRESS) {
+                if (printOwnAddress()) {
+                    Serial.print("OK SEND_BROADCAST_ADDRESS\n");
+                    configuration_status = CONFIGURATION_BROADCAST_ADDRESS;
+                } else {
+                    status = ERROR;
+                }
+            } else if (configuration_status == CONFIGURATION_BROADCAST_ADDRESS) {
+                if (printBroadcastAddress()) {
+                    Serial.print("OK SEND_MAXIMUM_MESSAGE_LENGTH\n");
+                    configuration_status = CONFIGURATION_MAXIMUM_MESSAGE_LENGTH;
+                } else {
+                    status = ERROR;
+                }
+            } else if (configuration_status == CONFIGURATION_MAXIMUM_MESSAGE_LENGTH) {
+                if (printMaximumMessageLength()) {
+                    Serial.print("OK SEND_SERIAL_BUFFER_SIZE\n");
+                    configuration_status = CONFIGURATION_SERIAL_BUFFER_SIZE;
+                } else {
+                    status = ERROR;
+                }
+            } else if (configuration_status == CONFIGURATION_SERIAL_BUFFER_SIZE) {
+                if (printSerialBufferSize()) {
+                    Serial.print("OK IDLE\n");
+                    configuration_status = CONFIGURATION_NONE;
+                    status = IDLE;
+                } else {
+                    status = ERROR;
+                }
+            }
+        }
+
         if (status == PARSE_FAILURE) {
             Serial.print("FAILURE PARSE_FAILURE\n");
             resetSerialBuffer();
@@ -242,6 +309,7 @@ public:
             send_status = SEND_NONE;
             status = IDLE;
         }
+        /*
         if (status == FAILURE) {
             Serial.print("FAILURE\n");
             resetSerialBuffer();
@@ -249,6 +317,7 @@ public:
             send_status = SEND_NONE;
             status = STARTING;
         }
+        */
         if (status == ERROR) {
             Serial.print("ERROR\n");
             resetSerialBuffer();
@@ -257,6 +326,77 @@ public:
 
     }
 
+    bool printStatus() {
+        Serial.print("STATUS");
+        Serial.print(" ");
+        if (status == STARTING) {
+            Serial.print("STARTING");
+        } else if (status == IDLE) {
+            Serial.print("IDLE");
+        } else if (status == SEND) {
+            Serial.print("SEND");
+        } else if (status == CONFIGURATION) {
+            Serial.print("CONFIGURATION");
+        } else if (status == PARSE_FAILURE) {
+            Serial.print("PARSE_FAILURE");
+        } else if (status == ERROR) {
+            Serial.print("ERROR");
+        } else {
+            Serial.print("\n");
+            return false;
+        }
+        Serial.print("\n");
+        return true;
+    }
+
+    bool printOwnAddress() {
+        Serial.print("OWN_ADDRESS");
+        device_address *address = socketInterface.getAddress();
+        if (address != nullptr) {
+            for (uint16_t i = 0; i < sizeof(device_address); i++) {
+                Serial.print(" ");
+                Serial.print(address->bytes[i], DEC);
+            }
+        } else {
+            Serial.print(" ");
+            Serial.print("N/A");
+        }
+        Serial.print("\n");
+        return true;
+    }
+
+    bool printBroadcastAddress() {
+        Serial.print("BROADCAST_ADDRESS");
+        device_address *address = socketInterface.getBroadcastAddress();
+        if (address != nullptr) {
+            for (uint16_t i = 0; i < sizeof(device_address); i++) {
+                Serial.print(" ");
+                Serial.print(address->bytes[i], DEC);
+            }
+        } else {
+            Serial.print(" ");
+            Serial.print("N/A");
+        }
+        Serial.print("\n");
+        return true;
+    }
+
+    bool printMaximumMessageLength() {
+        Serial.print("MAXIMUM_MESSAGE_LENGTH");
+        Serial.print(" ");
+        uint8_t maximumMessageLength = socketInterface.getMaximumMessageLength();
+        Serial.print(maximumMessageLength, DEC);
+        Serial.print("\n");
+        return true;
+    }
+
+    bool printSerialBufferSize() {
+        Serial.print("SERIAL_BUFFER_SIZE");
+        Serial.print(" ");
+        Serial.print(SerialBufferSize, DEC);
+        Serial.print("\n");
+        return true;
+    }
 
 
     void printSerialBuffer() {
@@ -310,7 +450,7 @@ public:
     }
 
     bool sendDataToAddress() {
-        return socketInterface.send(&destination_address,(uint8_t*) &data, data_length);
+        return socketInterface.send(&destination_address, (uint8_t * ) & data, data_length);
     }
 
     bool parseData(char *buffer) {
@@ -408,6 +548,15 @@ public:
         return memcmp(token, "SEND", strlen("SEND")) == 0;
     }
 
+    bool isConfiguration(char *buffer) {
+        char *token = strsep(&buffer, " ");
+        if (token == NULL) {
+            return false;
+        }
+        return memcmp(token, "CONFIGURATION", strlen("CONFIGURATION")) == 0;
+    }
+
+
     bool parseLong(const char *str, long *val) {
         char *temp;
         bool rc = true;
@@ -426,3 +575,4 @@ public:
 
 
 #endif //ARDUINO_MQTTSN_CLIENT_TRANSMISSIONPROTOCOLUARTBRDIGE_H
+

@@ -11,6 +11,7 @@
 #include "System.h"
 #include <cstdint>
 #include <cerrno>
+#include <climits>
 #include "global_defines.h"
 #include "mqttsn_messages.h"
 

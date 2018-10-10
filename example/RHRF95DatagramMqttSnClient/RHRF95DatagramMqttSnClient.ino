@@ -1,7 +1,7 @@
 /*
-  The MIT License (MIT)
-
-  Copyright (C) 2018 Gabriel Nikol
+* The MIT License (MIT)
+*
+* Copyright (C) 2018 Gabriel Nikol
 */
 
 #include <RHDatagram.h>
@@ -33,14 +33,14 @@ int8_t qos = 0;
 
 
 void mqttsn_callback(char *topic, uint8_t *payload, uint16_t length, bool retain) {
-  Serial.print("Received - Topic: ");
+  Serial.print(F("Received - Topic: "));
   Serial.print(topic);
-  Serial.print(" Payload: ");
+  Serial.print(F(" Payload: "));
   for (uint16_t i = 0; i < length; i++) {
     char c =  (char) * (payload + i);
     Serial.print(c);
   }
-  Serial.print(" Lenght: ");
+  Serial.print(F(" Length: "));
   Serial.println(length);
 }
 
@@ -50,12 +50,12 @@ void setup() {
   delay(10);
   Serial.println();
 
-  Serial.print("Starting MqttSnClient - ");
+  Serial.print(F("Starting MqttSnClient - "));
   mqttSnClient.setCallback(mqttsn_callback);
   if  (!mqttSnClient.begin()) {
-    Serial.print("Could not initialize MQTT-SN Client ");
+    Serial.print(F("Could not initialize MQTT-SN Client "));
     while (true) {
-      Serial.println(".");
+      Serial.println(F("."));
       delay(1000);
     }
   }
@@ -66,7 +66,7 @@ void setup() {
   rf95.setTxPower(TX_POWER);
   rf95.setModemConfig(MODEM_CONFIG_CHOICE);
 
-  Serial.println(" ready!");
+  Serial.println(F("ready!"));
 }
 
 void loop() {
@@ -74,16 +74,16 @@ void loop() {
     device_address gateway_device_address;
     memset(&gateway_device_address, 0x0, sizeof(device_address));
     gateway_device_address.bytes[0] = MqttSnGateway_Address;
-    Serial.print("MQTT-SN Gateway device_address: ");
+    Serial.print(F("MQTT-SN Gateway device_address: "));
     printDeviceAddress(&gateway_device_address);
-
+    Serial.println();
 
     if (!mqttSnClient.connect(&gateway_device_address, clientId, 180) ) {
-      Serial.println("Could not connect MQTT-SN Client.");
+      Serial.println(F("Could not connect MQTT-SN Client."));
       delay(1000);
       return;
     }
-    Serial.println("MQTT-SN Client connected.");
+    Serial.println(F("MQTT-SN Client connected."));
     mqttSnClient.subscribe(subscribeTopicName, qos);
   }
 
@@ -92,9 +92,9 @@ void loop() {
     if (buffer[buffer_pos - 1] == '\n') {
       // only qos -1, 0, 1 are supported
       if (!mqttSnClient.publish(buffer, publishTopicName , qos)) {
-        Serial.println("Could not publish");
+        Serial.println(F("Could not publish"));
       }
-      Serial.println("Published");
+      Serial.println(F("Published"));
       memset(buffer, 0x0, buffer_length);
       buffer_pos = 0;
     }
@@ -103,3 +103,4 @@ void loop() {
   mqttSnClient.loop();
 
 }
+

@@ -1,7 +1,7 @@
 /*
-  The MIT License (MIT)
-
-  Copyright (C) 2018 Gabriel Nikol
+* The MIT License (MIT)
+*
+* Copyright (C) 2018 Gabriel Nikol
 */
 
 #include <RHDatagram.h>

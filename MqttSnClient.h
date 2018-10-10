@@ -1,7 +1,7 @@
 /*
 * The MIT License (MIT)
 *
-* Copyright (C) 2018 Copyright (c) 2018 Gabriel Nikol
+* Copyright (C) 2018 Gabriel Nikol
 */
 
 #ifndef ARDUINO_MQTTSN_CLIENT_MQTTSNCLIENT_H

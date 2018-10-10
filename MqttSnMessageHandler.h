@@ -10,7 +10,7 @@
 #include "MqttSnClient.h"
 #include "global_defines.h"
 #include "mqttsn_messages.h"
-#include <cstdint>
+#include <stdint.h>
 
 template<class MqttSnClient_SocketInterface>
 class MqttSnClient;

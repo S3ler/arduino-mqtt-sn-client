@@ -7,7 +7,7 @@
 #ifndef ARDUINO_MQTTSN_CLIENT_GLOBAL_DEFINES_H
 #define ARDUINO_MQTTSN_CLIENT_GLOBAL_DEFINES_H
 
-#include <cstdint>
+#include <stdint.h>
 
 struct device_address {
     uint8_t bytes[6];  // mac

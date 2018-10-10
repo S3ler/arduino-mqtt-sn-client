@@ -9,7 +9,7 @@
 
 #include "MqttSnMessageHandler.h"
 #include "System.h"
-#include <cstdint>
+#include <stdint.h>
 #include "global_defines.h"
 #include "mqttsn_messages.h"
 

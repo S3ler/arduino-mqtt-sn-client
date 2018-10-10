@@ -9,12 +9,23 @@
 
 #include "MqttSnMessageHandler.h"
 #include "System.h"
-#include <cstdint>
-#include <cerrno>
-#include <climits>
+#include <stdint.h>
 #include "global_defines.h"
 #include "mqttsn_messages.h"
 
+#if defined(ESP8266)
+#include <cerrno>
+#include <climits>
+#endif
+
+#if defined(ARDUINO_AVR_UNO) || defined(ARDUINO_AVR_YUN) || defined(ARDUINO_AVR_MEGA2560)
+#ifndef LONG_MIN
+#define LONG_MIN -2147483647
+#endif // LONG_MIN
+#ifndef LONG_MAX
+#define LONG_MAX 2147483647
+#endif // LONG_MAX
+#endif
 
 enum TransmissionProtocolUartBridgeStatus {
     STARTING,
@@ -157,7 +168,11 @@ public:
 #if defined(ESP8266)
         Serial.print(F("OK RESET\n"));
         ESP.restart();
+#elif defined(ARDUINO_AVR_UNO) || defined(ARDUINO_AVR_YUN)
+        Serial.print(F("OK RESET\n"));
+        asm volatile ("  jmp 0");  
 #else
+        #warning "resetChip() is not properly implemented. This means we cannot reset the TransmissionProtocolUartBridge."
         Serial.print(F("ERROR RESET_NOT_SUPPORTED\n"));
 #endif
     }
@@ -561,11 +576,18 @@ public:
     bool parseLong(const char *str, long *val) {
         char *temp;
         bool rc = true;
+#if defined(ESP8266)
         errno = 0;
+#endif
         *val = strtol(str, &temp, 0);
 
         if (temp == str || (*temp != '\0' && *temp != '\n') ||
+#if defined(ESP8266)
             ((*val == LONG_MIN || *val == LONG_MAX) && errno == ERANGE))
+#else
+            // see: strtol() function return values
+            ((*val == LONG_MIN || *val == LONG_MAX) && true))
+#endif
             rc = false;
 
         return rc;

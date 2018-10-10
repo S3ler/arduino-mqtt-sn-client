@@ -26,7 +26,7 @@ THE SOFTWARE.
 #define ARDUINO_MQTTSN_CLIENT_MQTTSN_MESSAGES_H
 
 #include "global_defines.h"
-#include <cstring>
+#include <stdint.h>
 
 #define PROTOCOL_ID 0x01
 

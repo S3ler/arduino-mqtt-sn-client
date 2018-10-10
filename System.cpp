@@ -36,5 +36,11 @@ void System::sleep(uint32_t duration) {
 }
 
 void System::exit() {
+#if defined(ESP8266)
     ESP.restart();
+#elif defined(ARDUINO_AVR_UNO) || defined(ARDUINO_AVR_YUN) || defined(ARDUINO_AVR_MEGA2560)
+    asm volatile ("  jmp 0");
+#else
+    #error "System::exit() not properly implemented. This means we cannot reset the hardware. Change #error to #warning if you want to build anyway."
+#endif
 }

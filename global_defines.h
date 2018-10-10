@@ -19,6 +19,16 @@ struct device_address {
         bytes[4] = 0x0;
         bytes[5] = 0x0;
     }
+    device_address(uint8_t one, uint8_t two,
+                uint8_t three, uint8_t four,
+                uint8_t five, uint8_t six) {
+        bytes[0] = one;
+        bytes[1] = two;
+        bytes[2] = three;
+        bytes[3] = four;
+        bytes[4] = five;
+        bytes[5] = six;
+    }
 };
 
 void printDeviceAddress(device_address *address) {

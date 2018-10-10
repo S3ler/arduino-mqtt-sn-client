@@ -1,7 +1,7 @@
 /*
 * The MIT License (MIT)
 *
-* Copyright (C) 2018 Copyright (c) 2018 Gabriel Nikol
+* Copyright (C) 2018 Gabriel Nikol
 */
 
 #ifndef ARDUINO_MQTTSN_CLIENT_WIFIUDPSOCKET_H
@@ -17,9 +17,11 @@
 
 class WiFiUdpSocket : SocketInterface {
 private:
-    WiFiUDP &wiFiUdp;
     uint16_t port;
+    WiFiUDP &wiFiUdp;
+
     device_address own_address;
+
     device_address receive_address;
     uint8_t receive_buffer[RECEIVE_BUFFER_SIZE];
 public:
@@ -75,7 +77,7 @@ public:
         target.bytes[3] = source[3];
         // Port 4 - 5 bytes
         target.bytes[4] = port >> 8;
-        target.bytes[5] = (uint8_t) port ;
+        target.bytes[5] = (uint8_t) port;
     }
 
 
@@ -96,8 +98,9 @@ public:
 
     bool loop() override {
         if (wiFiUdp.parsePacket() > 0) {
-
+            memset(receive_address, 0x0, sizeof(device_address));
             memset(receive_buffer, 0x0, RECEIVE_BUFFER_SIZE);
+
             int available = wiFiUdp.available();
             if (available < RECEIVE_BUFFER_SIZE) {
 
@@ -107,11 +110,11 @@ public:
                     uint16_t remotePort = wiFiUdp.remotePort();
                     convertIPAddressAndPortToDeviceAddress(remoteIP, remotePort, receive_address);
 
-                    if(mqttSnMessageHandler != nullptr){
+                    if (mqttSnMessageHandler != nullptr) {
                         mqttSnMessageHandler->receiveData(&receive_address, receive_buffer);
                     }
 
-                    if(transmissionProtocolUartBridge != nullptr){
+                    if (transmissionProtocolUartBridge != nullptr) {
                         transmissionProtocolUartBridge->receiveData(&receive_address, receive_buffer, available);
                     }
 

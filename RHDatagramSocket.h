@@ -17,8 +17,6 @@ private:
     device_address own_address;
     device_address broadcast_address;
 
-    device_address receive_address;
-    uint8_t receive_buffer[RH_MAX_MESSAGE_LEN];
 public:
     RHDatagramSocket(RHDatagram &rhDatagram) : rhDatagram(rhDatagram) {};
 
@@ -45,7 +43,11 @@ public:
     }
 
     bool send(device_address *destination, uint8_t *bytes, uint16_t bytes_len, uint8_t signal_strength) override {
-        rhDatagram.sendto(bytes, bytes_len, destination->bytes[0]);
+        if (!rhDatagram.sendto(bytes, bytes_len, destination->bytes[0])) {
+            rhDatagram.waitPacketSent();
+            rhDatagram.available(); // put it back to receive mode
+            return false;
+        }
         rhDatagram.waitPacketSent();
         rhDatagram.available(); // put it back to receive mode
         return true;
@@ -54,9 +56,13 @@ public:
     bool loop() override {
         if (rhDatagram.available()) {
 
-            uint8_t receive_buffer_len = 0;
-            memset(&receive_buffer, 0x0, RH_MAX_MESSAGE_LEN);
+            device_address receive_address;
             memset(&receive_address, 0x0, sizeof(device_address));
+
+            uint8_t receive_buffer[RH_MAX_MESSAGE_LEN];
+            memset(&receive_buffer, 0x0, RH_MAX_MESSAGE_LEN);
+
+            uint8_t receive_buffer_len = sizeof(receive_buffer);
 
             if (rhDatagram.recvfrom(receive_buffer, &receive_buffer_len, &receive_address.bytes[0])) {
 

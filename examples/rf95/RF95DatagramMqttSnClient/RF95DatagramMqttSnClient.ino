@@ -62,9 +62,27 @@ void setup() {
 
   // Configure RH_RF95 driver after init from RHDatagram
   // Defaults after init are 434.0MHz, 13dBm, Bw = 125 kHz, Cr = 4/5, Sf = 128chips/symbol, CRC on
-  rf95.setFrequency(FREQUENCY);
+
+  if (!rf95.setFrequency(FREQUENCY)) {
+    Serial.print(F("setFrequency failed\n"));
+    while (true) {
+      Serial.println(".");
+      delay(1000);
+    }
+  }
+  Serial.print("Set Freq to: "); Serial.println(FREQUENCY);
+
+  if (!rf95.setModemConfig(RH_RF95::MODEM_CONFIG_CHOICE)) {
+    Serial.print(F("setModemConfig failed\n"));
+    while (true) {
+      Serial.println(".");
+      delay(1000);
+    }
+  }
+  Serial.print("Set Modem Config to: "); Serial.println(RH_RF95::MODEM_CONFIG_CHOICE);
+
   rf95.setTxPower(TX_POWER);
-  rf95.setModemConfig(MODEM_CONFIG_CHOICE);
+  Serial.print("Set TX Power to: "); Serial.println(TX_POWER);
 
   Serial.println(F("ready!"));
 }

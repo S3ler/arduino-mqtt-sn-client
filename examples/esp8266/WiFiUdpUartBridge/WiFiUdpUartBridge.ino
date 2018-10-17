@@ -16,7 +16,7 @@ WiFiUDP udp;
 uint16_t localUdpPort = 8888;
 WiFiUdpSocket wiFiUdpSocket(udp, localUdpPort);
 
-TransmissionProtocolUartBridge<WiFiUdpSocket> transmissionProtocolUartBridge(wiFiUdpSocket);
+TransmissionProtocolUartBridge<WiFiUdpSocket> transmissionProtocolUartBridge(&Serial, wiFiUdpSocket);
 
 void setup(){
   Serial.begin(115200);

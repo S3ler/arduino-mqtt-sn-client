@@ -36,7 +36,7 @@ For using the `WiFiUdpMqttSnClient` with a `ESP8266` and `UDP`as Transmission Pr
 ### Arduino Uno (LoRa)
 For using the `RF95DatagramMqttSnClient` with a `Arduino Uno` and `LoRa` on the physical layer and the `RHDatagram` as data link layer.
 * [Download the arduino-mqtt-sn-client library](https://github.com/S3ler/arduino-mqtt-sn-client/archive/master.zip) and copy it into your Arduino Library directory.
-* [Download the airspayce RadioHead library](https://www.airspayce.com/mikem/arduino/RadioHead/) from homepage. I tested it with version 1.87. Copy it into your Arduino Library directory.
+* [Download the airspayce RadioHead library](https://www.airspayce.com/mikem/arduino/RadioHead/) from homepage. I tested it with [version 1.87]( http://www.airspayce.com/mikem/arduino/RadioHead/RadioHead-1.87.zip). Copy it into your Arduino Library directory.
 * Unzip the archive and rename the folter to `RadioHead`.
 * Unzip the archive and rename the folder to `arduino-mqtt-sn-client`.
 * Restart your Arduino IDE if open.

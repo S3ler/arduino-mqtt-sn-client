@@ -98,7 +98,7 @@ public:
 
     bool loop() override {
         if (wiFiUdp.parsePacket() > 0) {
-            memset(receive_address, 0x0, sizeof(device_address));
+            memset(&receive_address, 0x0, sizeof(device_address));
             memset(receive_buffer, 0x0, RECEIVE_BUFFER_SIZE);
 
             int available = wiFiUdp.available();

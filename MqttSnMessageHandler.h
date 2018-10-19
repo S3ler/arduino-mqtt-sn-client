@@ -40,13 +40,13 @@ public:
             //TODO
             return;
         }
+        if (!mqttSnClient.is_gateway_address(address)) {
+            return;
+        }
         if (!mqttSnClient.is_mqttsn_connected()) {
             if (header->type == MQTTSN_CONNACK) {
                 parse_connack(address, bytes);
             }
-            return;
-        }
-        if (!mqttSnClient.is_gateway_address(address)) {
             return;
         }
         switch (header->type) {

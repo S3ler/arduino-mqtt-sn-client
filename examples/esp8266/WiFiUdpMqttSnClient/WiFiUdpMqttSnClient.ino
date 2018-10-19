@@ -17,11 +17,12 @@ const char* password = "your-password";
 char buffer[buffer_length + 1];
 uint16_t buffer_pos = 0;
 
-const char* gatewayHostAddress = "armada.dedyn.io";
+IPAddress gatewayIPAddress(192, 168, 178, 20);
+uint16_t localUdpPort = 8888;
 
+// #define gatewayHostAddress "arsmb.de"
 
 WiFiUDP udp;
-uint16_t localUdpPort = 8888;
 WiFiUdpSocket wiFiUdpSocket(udp, localUdpPort);
 MqttSnClient<WiFiUdpSocket> mqttSnClient(wiFiUdpSocket);
 
@@ -93,12 +94,14 @@ void convertIPAddressAndPortToDeviceAddress(IPAddress& source, uint16_t port, de
 
 void loop() {
   if (!mqttSnClient.is_mqttsn_connected()) {
+#if defined(gatewayHostAddress)
     IPAddress gatewayIPAddress;
-    device_address gateway_device_address;
     if (!WiFi.hostByName(gatewayHostAddress, gatewayIPAddress, 20000)) {
       Serial.println("Could not lookup MQTT-SN Gateway.");
       return;
     }
+#endif
+    device_address gateway_device_address;
     convertIPAddressAndPortToDeviceAddress(gatewayIPAddress, localUdpPort, gateway_device_address);
     Serial.print("MQTT-SN Gateway device_address: ");
     printDeviceAddress(&gateway_device_address);
@@ -111,12 +114,7 @@ void loop() {
     }
     Serial.println("MQTT-SN Client connected.");
     mqttSnClient.subscribe(subscribeTopicName, qos);
-    /*
-      char* a = "a";
-       if (!mqttSnClient.publish(a, publishTopicName , qos)) {
-            Serial.println("Could not publish");
-        }
-        Serial.println("Published");*/
+
   }
   if (Serial.available() > 0) {
     buffer[buffer_pos++] = Serial.read();

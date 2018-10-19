@@ -108,7 +108,8 @@ public:
     bool connect(device_address *address, const char *client_id, uint16_t duration) {
         // global verwalten
         uint8_t retries = 2;
-        memset(&this->gw_address, 0, sizeof(device_address));
+        memcpy(&this->gw_address, address, sizeof(device_address));
+
         for (uint8_t tries = 0; tries < retries; tries++) {
             system.set_heartbeat(5 * 1000);
             mqttSnMessageHandler.send_connect(address, client_id, duration);

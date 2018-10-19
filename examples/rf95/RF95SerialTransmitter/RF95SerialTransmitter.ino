@@ -69,8 +69,10 @@
 */
 
 // Change to 434.0 or other frequency, must match RX's freq!
-//#define RF95_FREQ 868.0
-#define RF95_FREQ 434.0
+//#define FREQUENCY 868.0
+#define FREQUENCY 434.0
+#define TX_POWER  13
+#define MODEM_CONFIG_CHOICE RH_RF95::Bw125Cr48Sf4096
 
 // Singleton instance of the radio driver
 RH_RF95 rf95(RFM95_CS, RFM95_INT);

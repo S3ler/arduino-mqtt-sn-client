@@ -14,10 +14,12 @@ char buffer[buffer_length + 1];
 uint16_t buffer_pos = 0;
 
 RH_RF95 rf95;
-#define FREQUENCY 868.0
+
+// Change to 434.0 or other frequency, must match RX's freq!
+//#define FREQUENCY 868.0
+#define FREQUENCY 434.0
 #define TX_POWER  13
 #define MODEM_CONFIG_CHOICE RH_RF95::Bw125Cr48Sf4096
-
 
 #define OWN_ADDRESS 2
 RHDatagram rhDatagram(rf95, 2);

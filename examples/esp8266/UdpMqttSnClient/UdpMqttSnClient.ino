@@ -9,15 +9,16 @@
 #include "UdpSocket.h"
 #include "MqttSnClient.h"
 
-const char* ssid     = "your-ssid";
-const char* password = "your-password";
+
+const char* ssid     = "...";
+const char* password = "...";
 
 
 #define buffer_length 10
 char buffer[buffer_length + 1];
 uint16_t buffer_pos = 0;
 
-IPAddress gatewayIPAddress(192, 168, 178, 20);
+IPAddress gatewayIPAddress(192, 168, 178, 88);
 uint16_t localUdpPort = 8888;
 
 // #define gatewayHostAddress "arsmb.de"
@@ -40,7 +41,7 @@ void mqttsn_callback(char *topic, uint8_t *payload, uint16_t length, bool retain
     char c =  (char) * (payload + i);
     Serial.print(c);
   }
-  Serial.print(" Lenght: ");
+  Serial.print(" Length: ");
   Serial.println(length);
 }
 
@@ -105,16 +106,19 @@ void loop() {
     convertIPAddressAndPortToDeviceAddress(gatewayIPAddress, localUdpPort, gateway_device_address);
     Serial.print("MQTT-SN Gateway device_address: ");
     printDeviceAddress(&gateway_device_address);
-
-
+    Serial.println();
     if (!mqttSnClient.connect(&gateway_device_address, clientId, 180) ) {
       Serial.println("Could not connect MQTT-SN Client.");
       delay(1000);
       return;
     }
     Serial.println("MQTT-SN Client connected.");
-    mqttSnClient.subscribe(subscribeTopicName, qos);
-
+    if (!mqttSnClient.subscribe(subscribeTopicName, qos)) {
+      Serial.println("subscription failed.");
+      delay(1000);
+      return;
+    }
+    Serial.println("subscribed.");
   }
   if (Serial.available() > 0) {
     buffer[buffer_pos++] = Serial.read();

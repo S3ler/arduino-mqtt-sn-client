@@ -135,11 +135,11 @@ public:
         return false;
     }
 
-    void subscribe(const char *topic, uint8_t qos) {
+    bool subscribe(const char *topic, uint8_t qos) {
         while (this->await_msg_type != MQTTSN_PINGREQ) {
             // wait until we have no other messages in flight
             if (!socketInterface.loop()) {
-                return;
+                return false;
             }
         }
         mqttSnMessageHandler.send_subscribe(&gw_address, topic, qos);
@@ -149,6 +149,13 @@ public:
         registration.topic_name = (char *) topic;
         registration.granted_qos = qos;
         await_topic_id = true;
+        while (this->await_msg_type != MQTTSN_PINGREQ) {
+            // wait until we have no other messages in flight
+            if (!socketInterface.loop()) {
+                return false;
+            }
+        }
+        return true;
     }
 
     bool publish(char *payload, char *topic_name, int8_t qos) {

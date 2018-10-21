@@ -17,7 +17,7 @@ const char* password = "...";
 char buffer[buffer_length + 1];
 uint16_t buffer_pos = 0;
 
-IPAddress gatewayIPAddress(192, 168, 178, 20);
+IPAddress gatewayIPAddress(192, 168, 178, 88);
 uint16_t localTcpPort = 8888;
 
 // #define gatewayHostAddress "arsmb.de"
@@ -27,8 +27,8 @@ ClientSocket clientSocket(&client);
 MqttSnClient<ClientSocket> mqttSnClient(clientSocket);
 
 const char* clientId = "UdpMqttSnClient";
-char* subscribeTopicName = "ESP8266/Udp/subscribe";
-char* publishTopicName = "ESP8266/Udp/publish";
+char* subscribeTopicName = "ESP8266/Tcp/subscribe";
+char* publishTopicName = "ESP8266/Tcp/publish";
 
 int8_t qos = 0;
 
@@ -40,7 +40,7 @@ void mqttsn_callback(char *topic, uint8_t *payload, uint16_t length, bool retain
     char c =  (char) * (payload + i);
     Serial.print(c);
   }
-  Serial.print(" Lenght: ");
+  Serial.print(" Length: ");
   Serial.println(length);
 }
 

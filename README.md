@@ -11,9 +11,9 @@ Arduino based MQTT-SN Client
 |   	| UDP  	| TCP  	| Ethernet  	| WiFi  	| ZigBee  	| LoRa  	| BLE  	|
 |---	|---	|---	|---	|---	|---	|---	|---	|
 | Arduino ESP8266 	| &#x2705;  	| &#x2705;  	|         	| &#x2705;  	| &#x274E;\*  	| &#x274E;\*  	|       	|
-| Arduino ESP32 	| &#x274E;  	| &#x274E;  	|         	| &#x2705;  	| &#x274E;\*  	| &#x274E;\*  	| &#x274E;\*	|
+| Arduino ESP32 	| &#x274E;  	| &#x274E;  	|         	| &#x2705;  	| &#x274E;\*  	| &#x274E;\*  	| &#x274E;	|
 | Arduino Mega 	| &#x274E;\*  	| &#x274E;\*  	| &#x274E;\*  	|           	| &#x274E;\*  	| &#x274E;\*  	|         	|
-| Arduino Uno 	| &#x274E;\*  	| &#x274E;\*  	| &#x274E;\*  	|           	| &#x274E;\*  	| &#x2705;\*  	|         	|
+| Arduino Uno 	| &#x2705;\*  	| &#x2705;\*  	| &#x2705;\*  	|           	| &#x274E;\*  	| &#x2705;\*  	|         	|
 
 \* needs additional transmission hardware
 

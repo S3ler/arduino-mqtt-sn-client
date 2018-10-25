@@ -1,7 +1,7 @@
 /*
-* The MIT License (MIT)
-*
-* Copyright (C) 2018 Gabriel Nikol
+  The MIT License (MIT)
+
+  Copyright (C) 2018 Gabriel Nikol
 */
 
 #include <RHDatagram.h>
@@ -21,12 +21,12 @@ RH_RF95 rf95;
 #define TX_POWER  13
 #define MODEM_CONFIG_CHOICE RH_RF95::Bw125Cr48Sf4096
 
-#define OWN_ADDRESS 2
-RHDatagram rhDatagram(rf95, 2);
+#define OWN_ADDRESS 4
+RHDatagram rhDatagram(rf95, OWN_ADDRESS);
 RHDatagramSocket rhDatagramSocket(rhDatagram);
 MqttSnClient<RHDatagramSocket> mqttSnClient(rhDatagramSocket);
 
-#define MqttSnGateway_Address   1
+#define MqttSnGateway_Address   2
 
 const char* clientId = "RHDSMqttSnClient";
 char* subscribeTopicName = "RHDatagram/subscribe";
@@ -103,8 +103,13 @@ void loop() {
       delay(1000);
       return;
     }
-    Serial.println(F("MQTT-SN Client connected."));
-    mqttSnClient.subscribe(subscribeTopicName, qos);
+    if (!mqttSnClient.subscribe(subscribeTopicName, qos)) {
+      Serial.println("subscription failed.");
+      delay(1000);
+      return;
+    }
+    Serial.println("subscribed.");
+
   }
 
   if (Serial.available() > 0) {
@@ -123,4 +128,3 @@ void loop() {
   mqttSnClient.loop();
 
 }
-

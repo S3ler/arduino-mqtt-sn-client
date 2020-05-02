@@ -23,7 +23,7 @@ struct topic_registration {
     uint8_t granted_qos;
 };
 
-#ifdef ESP8266
+#if defined(ESP8266) || defined(ESP32)
 #include <functional>
 #define MQTT_SN_CALLBACK_SIGNATURE std::function<void(char*, uint8_t*, uint16_t, bool retain)> callback
 #else
@@ -105,13 +105,12 @@ public:
         this->callback = callback;
     }
 
-    bool connect(device_address *address, const char *client_id, uint16_t duration) {
-        // global verwalten
-        uint8_t retries = 2;
+    bool connect(device_address *address, const char *client_id, uint16_t duration, uint8_t retries = 2, uint8_t timeout = 5, uint8_t retry_pause = 10) {
+
         memcpy(&this->gw_address, address, sizeof(device_address));
 
         for (uint8_t tries = 0; tries < retries; tries++) {
-            system.set_heartbeat(5 * 1000);
+            system.set_heartbeat(timeout * 1000);
             mqttSnMessageHandler.send_connect(address, client_id, duration);
             this->set_await_message(MQTTSN_CONNACK);
             while (!mqttsn_connected) {
@@ -129,7 +128,7 @@ public:
                     return false;
                 }
             }
-            system.sleep((tries + 1) * 10 * 1000);
+            system.sleep((tries + 1) * retry_pause * 1000);
         }
         // timeout - take another gateway
         return false;

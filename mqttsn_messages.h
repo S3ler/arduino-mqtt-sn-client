@@ -195,7 +195,7 @@ struct msg_willtopic : public message_header {
     char will_topic[252];
 
     msg_willtopic(const char *willtopic, int8_t qos, bool retain) {
-        memset(this, 0, sizeof(this));
+        memset(this, 0, sizeof(*this));
         length = 3 + strlen(willtopic) + 1;
         type = MQTTSN_WILLTOPIC;
         if (retain) {
@@ -215,7 +215,7 @@ struct msg_willmsg : public message_header {
     uint8_t willmsg[253];
 
     msg_willmsg(const uint8_t *s_data, uint8_t s_data_len) {
-        memset(this, 0, sizeof(this));
+        memset(this, 0, sizeof(*this));
         this->length = ((uint8_t) 2) + s_data_len;
         memcpy(&willmsg, s_data, s_data_len);
     }
@@ -279,7 +279,7 @@ struct msg_publish : public message_header {
 
     msg_publish(bool dup, int8_t qos, bool retain, bool short_topic, uint16_t topic_id, uint16_t msg_id,
                 const uint8_t *s_data, uint8_t s_data_len) : topic_id(topic_id), message_id(msg_id) {
-        memset(this, 0, sizeof(this));
+        memset(this, 0, sizeof(*this));
         this->length = ((uint8_t) 7) + s_data_len;
         this->type = MQTTSN_PUBLISH;
         this->flags = 0x0;
@@ -349,7 +349,7 @@ struct msg_subscribe_shorttopic : public msg_subscribe {
     uint16_t topic_id;
 
     msg_subscribe_shorttopic(bool short_topic, uint16_t topic_id, uint16_t msg_id, uint8_t qos, bool dup) {
-        memset(this, 0, sizeof(this));
+        memset(this, 0, sizeof(*this));
 
         this->length = 7;
         this->type = MQTTSN_SUBSCRIBE;
@@ -382,7 +382,7 @@ struct msg_subscribe_topicname : public msg_subscribe {
     char topic_name[250];
 
     msg_subscribe_topicname(const char *topic_name, uint16_t msg_id, uint8_t qos, bool dup) {
-        memset(this, 0, sizeof(this));
+        memset(this, 0, sizeof(*this));
         this->length = (uint8_t) (5 + strlen(topic_name) + 1);
         this->type = MQTTSN_SUBSCRIBE;
         if (dup) {

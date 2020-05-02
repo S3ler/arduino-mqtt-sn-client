@@ -7,6 +7,8 @@
 #ifndef ARDUINO_MQTT_SN_CLIENT_RHDATAGRAMSOCKET_H
 #define ARDUINO_MQTT_SN_CLIENT_RHDATAGRAMSOCKET_H
 
+#include <RHDatagram.h>
+
 #include "MqttSnMessageHandler.h"
 #include "SocketInterface.h"
 

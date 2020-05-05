@@ -76,6 +76,7 @@ public:
 
     void notify_socket_disconnected() {
         this->socket_disconnected = true;
+        this->mqttsn_connected = false;
     }
 
     void set_await_message(message_type msg_type) {
@@ -107,6 +108,7 @@ public:
 
     bool connect(device_address *address, const char *client_id, uint16_t duration, uint8_t retries = 2, uint8_t timeout = 5, uint8_t retry_pause = 10) {
 
+        socket_disconnected = false;
         memcpy(&this->gw_address, address, sizeof(device_address));
 
         for (uint8_t tries = 0; tries < retries; tries++) {
@@ -274,6 +276,7 @@ public:
     }
 
     void notify_socket_connected() {
+        Serial.println("\nSocket disconnected\n");
         this->socket_disconnected = false;
     }
 

@@ -15,7 +15,7 @@
 #include <Stream.h>
 
 
-#if defined(ESP8266)
+#if defined(ESP8266) || defined(ESP32)
 #include <cerrno>
 #include <climits>
 #endif
@@ -178,7 +178,7 @@ public:
     }
 
     void resetChip() {
-#if defined(ESP8266)
+#if defined(ESP8266) || defined(ESP32)
         stream->print(F("OK RESET\n"));
         delay(500);
         ESP.restart();

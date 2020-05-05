@@ -36,7 +36,7 @@ void System::sleep(uint32_t duration) {
 }
 
 void System::exit() {
-#if defined(ESP8266)
+#if defined(ESP8266) || defined(ESP32)
     ESP.restart();
 #elif defined(ARDUINO_AVR_UNO) || defined(ARDUINO_AVR_YUN) || defined(ARDUINO_AVR_MEGA2560)
     asm volatile ("  jmp 0");

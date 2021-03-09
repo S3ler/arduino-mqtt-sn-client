@@ -64,7 +64,7 @@ enum CONFIGURATION_STATUS {
 // #define PARSERDATADEBUG
 // #define PARSERADDRESSDEBUG
 #define SERIAL_BUFFER_SIZE 200
-#define RECEIVE_BUFFER_SIZE 64
+#define RECEIVE_BUFFER_SZ 64
 #define SEND_BUFFER_SIZE 64
 
 template<class TransmissionProtocolUartBridge_SocketInterface>
@@ -93,7 +93,7 @@ private:
 
     // ReceiveBuffer
     device_address receive_address;
-    uint8_t receive_buffer[RECEIVE_BUFFER_SIZE];
+    uint8_t receive_buffer[RECEIVE_BUFFER_SZ];
     uint16_t receive_buffer_length = 0;
     Stream *stream;
 
@@ -178,7 +178,7 @@ public:
     }
 
     void resetChip() {
-#if defined(ESP8266)
+#if defined(ESP8266) or defined(ESP32) // RJM
         stream->print(F("OK RESET\n"));
         delay(500);
         ESP.restart();

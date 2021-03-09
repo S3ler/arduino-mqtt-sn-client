@@ -247,8 +247,8 @@ public:
 
 
     void send_publish(device_address *address, uint8_t *data, uint8_t data_len, uint16_t msg_id,
-                      uint16_t topic_id, bool short_topic, bool retain, uint8_t qos, bool dup) {
-        msg_publish to_send(dup, qos, retain, short_topic, topic_id, msg_id, data, data_len);
+                      uint16_t topic_id, uint8_t topic_type, bool retain, uint8_t qos, bool dup) {
+        msg_publish to_send(dup, qos, retain, topic_type, topic_id, msg_id, data, data_len);
         if (!socketInterface.send(address, (uint8_t *) &to_send, (uint16_t) to_send.length)) {
             mqttSnClient.notify_socket_disconnected();
         }

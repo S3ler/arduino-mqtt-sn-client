@@ -10,7 +10,11 @@
 
 #include "MqttSnMessageHandler.h"
 #include "SocketInterface.h"
+#ifdef ESP32
+#include <WiFi.h>
+#else
 #include <ESP8266WiFi.h>
+#endif
 #include <WiFiUdp.h>
 
 #define RECEIVE_BUFFER_SIZE 255
@@ -40,7 +44,7 @@ public:
 
     device_address *getAddress() override {
         IPAddress localIP = WiFi.localIP();
-        uint16_t localPort = wiFiUdp.localPort();
+        uint16_t localPort = port;
         convertIPAddressAndPortToDeviceAddress(localIP, localPort, own_address);
         return &own_address;
     }

@@ -28,6 +28,11 @@ THE SOFTWARE.
 #include "global_defines.h"
 #include <stdint.h>
 
+// Types of topic IDs
+#define REGISTERED 0    // registered in this session
+#define PREDEFINED 1    // known to gateway (no need to register)
+#define SHORTTOPIC 2    // only two characters (no need to register)
+
 #define PROTOCOL_ID 0x01
 
 #define FLAG_NO_FLAGS 0x00
@@ -277,7 +282,7 @@ struct msg_publish : public message_header {
     uint16_t message_id;
     uint8_t data[UINT8_MAX - 7];
 
-    msg_publish(bool dup, int8_t qos, bool retain, bool short_topic, uint16_t topic_id, uint16_t msg_id,
+    msg_publish(bool dup, int8_t qos, bool retain, uint8_t topic_type, uint16_t topic_id, uint16_t msg_id,
                 const uint8_t *s_data, uint8_t s_data_len) : topic_id(topic_id), message_id(msg_id) {
         memset(this, 0, sizeof(this));
         this->length = ((uint8_t) 7) + s_data_len;
@@ -289,10 +294,14 @@ struct msg_publish : public message_header {
         if (retain) {
             this->flags |= FLAG_RETAIN;
         }
-        if (short_topic) {
-            this->flags |= FLAG_TOPIC_SHORT_NAME;
-        } else {
-            this->flags |= FLAG_TOPIC_PREDEFINED_ID;
+	if (topic_type == REGISTERED) {
+	  this->flags |= FLAG_TOPIC_NAME;    // Normal
+	}
+	else if (topic_type == PREDEFINED) { // Previously known to gateway
+	  this->flags |= FLAG_TOPIC_PREDEFINED_ID; 
+        }
+	else if (topic_type == SHORTTOPIC) { // Short topic
+	  this->flags |= FLAG_TOPIC_SHORT_NAME;
         }
         if (qos == 0) {
             this->flags |= FLAG_QOS_0;

@@ -185,22 +185,28 @@ public:
                 }
             }
         }
-
-        // check if topic_name is already registered
-        uint16_t topic_id = 0;
-        if (this->registration.topic_name == topic_name) {
+	uint8_t topic_type = REGISTERED; // normal
+	uint16_t topic_id = 0;
+	if (strlen(topic_name) != 2) {
+	  // check if topic_name is already registered
+	  if (this->registration.topic_name == topic_name) {
             topic_id = registration.topic_id;
-        } else if (this->publish_registration.topic_name == topic_name) {
+	  } else if (this->publish_registration.topic_name == topic_name) {
             topic_id = publish_registration.topic_id;
-        } else {
+	  } else {
             // it is not registered - register it now
             topic_id = register_topic(topic_name);
-        }
-        if (topic_id == 0) {
+	  }
+	  if (topic_id == 0) {
             // TODO check if compatible or if gateway deliveres 0 too (then change return type of register_topic)
             return false;
-        }
-        publish_registration.topic_id = topic_id;
+	  }
+	  publish_registration.topic_id = topic_id;
+	}
+	else { // short topic
+	  topic_id = (uint16_t)((topic_name[1] << 8) | topic_name[0]);
+	  topic_type = SHORTTOPIC;
+	}
 
         uint16_t msg_id = this->increment_and_get_msg_id_counter();
         if (qos == 0) {
@@ -211,7 +217,7 @@ public:
         }
 
 	mqttSnMessageHandler.send_publish(&gw_address, (uint8_t *) payload, payload_length, msg_id,
-					  topic_id, REGISTERED, false, qos, false);
+					  topic_id, topic_type, false, qos, false);
         if (qos > 0) {
             while (this->await_msg_type != MQTTSN_PINGREQ) {
                 // wait until we have no other messages in flight
